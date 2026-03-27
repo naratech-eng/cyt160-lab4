@@ -1,0 +1,11 @@
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /suricata-logs/eve.json
+    json.keys_under_root: true
+    json.add_error_key: true
+output.elasticsearch:
+  hosts: ["http://host.docker.internal:9200"]
+  index: "suricata-alerts-%{+yyyy.MM.dd}"
+setup.ilm.enabled: false
