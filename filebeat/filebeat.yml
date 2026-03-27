@@ -6,6 +6,11 @@ filebeat.inputs:
     json.keys_under_root: true
     json.add_error_key: true
 output.elasticsearch:
-  hosts: ["http://host.docker.internal:9200"]
+  hosts: ["https://host.docker.internal:9200"]
+  username: "elastic"
+  password: "${ELASTIC_PASSWORD}"
+  ssl.verification_mode: none
   index: "suricata-alerts-%{+yyyy.MM.dd}"
+setup.template.name: "suricata-alerts"
+setup.template.pattern: "suricata-alerts-*"
 setup.ilm.enabled: false

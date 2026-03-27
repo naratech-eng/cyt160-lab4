@@ -1,5 +1,3 @@
-version: '3.8'
-
 networks:
   iot-net:
     driver: bridge
@@ -35,6 +33,8 @@ services:
     image: docker.elastic.co/beats/filebeat:8.11.0
     container_name: filebeat
     user: root
+    environment:
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
