@@ -1,0 +1,48 @@
+version: '3.8'
+
+networks:
+  iot-net:
+    driver: bridge
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    networks:
+      - iot-net
+    restart: unless-stopped
+
+  suricata:
+    image: jasonish/suricata:latest
+    container_name: suricata
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    network_mode: service:mosquitto
+    volumes:
+      - ./suricata/rules:/etc/suricata/rules
+      - suricata-logs:/var/log/suricata
+    command: >
+      suricata -c /etc/suricata/suricata.yaml -i eth0
+      --set rule-files.0=/etc/suricata/rules/local.rules
+    restart: unless-stopped
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.11.0
+    container_name: filebeat
+    user: root
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - suricata-logs:/suricata-logs:ro
+    depends_on:
+      - suricata
+    restart: unless-stopped
+
+volumes:
+  suricata-logs:
