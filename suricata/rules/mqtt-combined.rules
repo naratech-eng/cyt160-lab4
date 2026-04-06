@@ -1,0 +1,23 @@
+# ----------------------------------------------------------------------
+# mqtt-rate-limit.rules
+#
+# PURPOSE: Detect MQTT broker flooding / DoS attacks.
+# LOGIC: Count TCP packets to port 1883 per source IP over a 60-second
+# sliding window. Alert once the count exceeds 100.
+# TRIGGER: Any MQTT client sending more than 100 messages per minute.
+# SID: 2000001
+# ----------------------------------------------------------------------
+alert tcp any any -> any 1883 (msg:"MQTT Excessive Publish Rate - Possible Flood Attack"; flow:established,to_server; threshold:type threshold, track by_src, count 100, seconds 60; classtype:attempted-dos; sid:2000001; rev:1;)
+# ----------------------------------------------------------------------
+# mqtt-malformed-json.rules
+#
+# PURPOSE: Detect MQTT PUBLISH payloads that are not valid JSON.
+# RULE 2000002: payload contains the string 'undefined' - common bug in
+# JavaScript IoT clients that serialize unset variables.
+# RULE 2000003: payload starts with a long run of repeated 'A' bytes -
+# classic buffer-overflow probe or fuzzing pattern.
+# SID range: 2000002-2000003
+# ----------------------------------------------------------------------
+alert tcp any any -> any 1883 (msg:"MQTT Payload Contains Undefined - Malformed JSON Indicator"; flow:established,to_server; content:"undefined"; classtype:bad-unknown; sid:2000002; rev:1;)
+
+alert tcp any any -> any 1883 (msg:"MQTT Oversized Repeated-Byte Payload - Buffer Overflow Probe"; flow:established,to_server; content:"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"; depth:100; classtype:bad-unknown; sid:2000003; rev:1;)

@@ -29,6 +29,8 @@ services:
     command: >
       suricata -c /etc/suricata/suricata.yaml -i eth0
       --set rule-files.0=/etc/suricata/rules/local.rules
+      --set rule-files.1=/etc/suricata/rules/mqtt-rate-limit.rules
+      --set rule-files.2=/etc/suricata/rules/mqtt-malformed-json.rules
     restart: unless-stopped
 
   filebeat:
