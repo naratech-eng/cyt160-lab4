@@ -5,12 +5,14 @@ filebeat.inputs:
       - /suricata-logs/eve.json
     json.keys_under_root: true
     json.add_error_key: true
-output.elasticsearch:
-  hosts: ["https://host.docker.internal:9200"]
-  username: "elastic"
-  password: "${ELASTIC_PASSWORD}"
-  ssl.verification_mode: none
-  index: "suricata-alerts-%{+yyyy.MM.dd}"
+#output.elasticsearch:
+#  hosts: ["https://host.docker.internal:9200"]
+#  username: "elastic"
+#  password: "${ELASTIC_PASSWORD}"
+#  ssl.verification_mode: none
+# index: "suricata-alerts-%{+yyyy.MM.dd}"
+output.logstash:
+  hosts: ["host.docker.internal:5044"]
 setup.template.name: "suricata-alerts"
 setup.template.pattern: "suricata-alerts-*"
 setup.ilm.enabled: false
