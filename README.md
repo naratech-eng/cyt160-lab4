@@ -99,6 +99,37 @@ docker compose logs filebeat --tail=100
 curl -k -u elastic:$ELASTIC_PASSWORD "https://localhost:9200/_cat/indices/suricata-alerts-*?v"
 ```
 
+## Index Sensor Data into Elasticsearch
+
+Because sensor data in this lab path is observed as network flow events (`Mosquitto -> Suricata -> Filebeat -> Logstash`) rather than decoded MQTT topic/payload fields, index sensor readings directly for dashboard/search use.
+
+`index_sensor_data.py` auto-loads variables from the project `.env` file and does not hardcode the Elasticsearch password. Ensure `.env` contains at least:
+
+```bash
+ELASTIC_PASSWORD=your_elastic_password
+```
+
+Run on the AWS VM after running the publisher script:
+
+```bash
+python3 ~/cyt160-lab4/iot-lab5/sensor.py
+python3 ~/cyt160-lab4/iot-lab5/index_sensor_data.py
+```
+
+After ~35 seconds, verify Elasticsearch received the readings:
+
+```bash
+curl -sk -u elastic:$ELASTIC_PASSWORD "https://localhost:9200/iot-sensor-data-*/_count" | python3 -m json.tool
+```
+
+Expected result includes:
+
+```json
+{
+  "count": 30
+}
+```
+
 ## Useful Commands
 
 - Start: `docker compose up -d`
