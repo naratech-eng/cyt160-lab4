@@ -27,11 +27,16 @@ ELASTIC_URL = os.getenv("ELASTIC_URL", "https://localhost:9200")
 ELASTIC_USER = os.getenv("ELASTIC_USER", "elastic")
 ELASTIC_PASSWORD = os.getenv("ELASTIC_PASSWORD")
 VERIFY_TLS = os.getenv("ELASTIC_VERIFY_TLS", "false").lower() == "true"
+ELASTIC_CA_CERT = os.getenv("ELASTIC_CA_CERT")
 
 
 def main() -> None:
     if not ELASTIC_PASSWORD:
         raise RuntimeError("ELASTIC_PASSWORD is not set. Add it to .env or export it in shell.")
+
+    verify_opt = False
+    if VERIFY_TLS:
+        verify_opt = ELASTIC_CA_CERT if ELASTIC_CA_CERT else True
 
     index_name = f"iot-sensor-data-{time.strftime('%Y.%m.%d')}"
 
@@ -54,7 +59,7 @@ def main() -> None:
             json=doc,
             headers={"Content-Type": "application/json"},
             auth=(ELASTIC_USER, ELASTIC_PASSWORD),
-            verify=VERIFY_TLS,
+            verify=verify_opt,
             timeout=10,
         )
 
