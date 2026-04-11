@@ -6,40 +6,44 @@ A Raspberry Pi 5 publishes real or simulated sensor readings over MQTT. Suricata
 ## Architecture
 
 ```mermaid
-flowchart LR
+flowchart TD
     subgraph Pi["Raspberry Pi 5"]
-        S["sensor.py<br/>MQTT Publisher"]
+        S["sensor.py\nMQTT Publisher"]
+        FL["mqtt_flood.py\nFlood Attack Sim"]
+        ML["mqtt_malformed.py\nMalformed Payload Sim"]
+        TL["mqtt_publish_tls.py\nTLS Publisher"]
     end
 
-    subgraph EC2["AWS EC2 Instance"]
-        subgraph Docker["Docker Compose"]
-            MQ["Mosquitto<br/>:1883 plaintext<br/>:8883 TLS"]
-            SU["Suricata IDS<br/>network_mode: mosquitto"]
-            FB["Filebeat"]
-        end
-
-        subgraph Host["Host Services"]
-            LS["Logstash<br/>:5044"]
-            ES["Elasticsearch<br/>:9200 HTTPS"]
-            KB["Kibana<br/>:5601"]
-        end
-
-        EVE[("eve.json<br/>shared volume")]
+    subgraph Docker["Docker Compose (EC2)"]
+        MQ["Mosquitto\n:1883 / :8883 TLS"]
+        SU["Suricata IDS\nnetwork_mode: mosquitto"]
+        FB["Filebeat"]
+        EVE[("eve.json\nshared volume")]
     end
 
-    S -- "MQTT :1883 / :8883" --> MQ
-    MQ -- "mirrored traffic" --> SU
-    SU -- "writes alerts" --> EVE
-    EVE -- "reads logs" --> FB
-    FB -- "Beats protocol :5044" --> LS
-    LS -- "HTTPS :9200" --> ES
-    ES -- "enrollment token" --> KB
-
-    subgraph Direct["Direct Indexing"]
-        IX["index_sensor_data.py"]
+    subgraph Host["Host Services (EC2)"]
+        IDX["index_sensor_data.py"]
+        LS["Logstash :5044"]
+        ES["Elasticsearch :9200 HTTPS"]
+        KB["Kibana :5601"]
     end
 
-    IX -- "HTTPS :9200" --> ES
+    S -- "MQTT :1883" --> MQ
+    FL -- "MQTT :1883\nflood" --> MQ
+    ML -- "MQTT :1883\nmalformed" --> MQ
+    TL -- "MQTT :8883 TLS" --> MQ
+    MQ -- "eth0 mirror" --> SU
+    SU -- "writes" --> EVE
+    EVE -- "tails" --> FB
+    FB -- "Beats" --> LS
+    LS -- "op_type:create" --> ES
+    IDX -- "HTTPS\niot-sensor-data-*" --> ES
+    ES --> KB
+
+    style Pi fill:#e8f4f8,stroke:#2196F3
+    style Docker fill:#e3f2fd,stroke:#1565C0
+    style Host fill:#e8f5e9,stroke:#2E7D32
+    style EVE fill:#fff9c4,stroke:#F9A825
 ```
 
 ## Data Flow
